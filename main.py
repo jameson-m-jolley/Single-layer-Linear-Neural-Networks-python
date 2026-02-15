@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import unittest
 import pickle
+import json
 from abc import ABC, abstractmethod
 
 
@@ -17,7 +18,12 @@ class abstract_training_class(ABC):
         self.preceptron.vector = np.random.normal(loc=0 ,scale=1, size = shape)
 
     def net_output(self,x):
-        return np.dot(x, self.preceptron.vector) + self.preceptron.bias
+        weights = np.array(self.preceptron.vector, dtype=np.float64)
+        bias = float(self.preceptron.bias)
+        if type(x) == str:
+            print(f"type of x is a string that string is[{x}]")
+        input_x = np.array(x, dtype=np.float64)
+        return np.dot(input_x, weights) + bias
     
     def predict(self,input_vec = []):
         return self.activation(self.net_output(input_vec))
@@ -48,13 +54,14 @@ class preceptron(object):
         if(self.filepath):
             try:
                 self = self.load()
-                self.lerning_rate = lerning_rate
-                self.n_itterations = n_itterations
-                self.training_class = training_class(shape = shape,preceptron = self)
-                self.filepath = filepath 
-                print(f"{filepath} loaded into obj at {self}")
             except:
                 print(f"no file with path:{filepath}")
+
+    def to_JSON(self):
+        clone = self.__dict__.copy()
+        clone['training_class'] = None
+        clone['vector'] = self.vector.tolist()
+        return json.dumps(clone)
 
     def __str__(self):
         return f"""
@@ -70,11 +77,16 @@ ____________________________________
 
     def save(self):
         with open(self.filepath,'wb') as f:
-            pickle.dump(self,f)
+            bites = self.to_JSON().encode('utf-8')
+            f.write(bites)
     
     def load(self):
+        '''loads only the vector and the bias we dont need anything else from the file'''
         with open(self.filepath,'rb') as f:
-            return pickle.load(f)
+            json_data = json.load(f)
+            self.vector = np.array(json_data["vector"],dtype=float)
+            self.bias = float(json_data["bias"])
+
   
 
 class binary_classification(abstract_training_class):
@@ -112,10 +124,13 @@ class Adaline_classification(abstract_training_class):
         for i in range(self.preceptron.n_itterations):
             try:
                 errors =(labes -  self.net_output(data_points)) # the disetances of the output from the actctual
-                print(i)
+                cost = sum(errors**2) / 2.0
+                if cost == float('nan') or cost == float('inf') :
+                    self.preceptron.lerning_rate = sys.float_info.min
+                    raise ValueError("cost should not be nan or infinity lowering the learning rate to the min")
                 self.preceptron.vector += self.preceptron.lerning_rate*data_points.T.dot(errors) # this is an array op i didn't know this was a thing
                 self.preceptron.bias += self.preceptron.lerning_rate* sum(errors)
-                cost = sum(errors**2)/2
+                
                 self.costs.append(cost)
                 if i % 10 == 0:
                     print(f"Iteration {i}: Cost {cost}")
@@ -124,7 +139,7 @@ class Adaline_classification(abstract_training_class):
         return self
     
     def activation(self, z):
-        return super().activation(z)
+        return 1 if z >=0 else 0
 
 
 class SGDbinary_classification(abstract_training_class):
@@ -146,12 +161,12 @@ class SGDbinary_classification(abstract_training_class):
         return self
     
     def activation(self, z):
-        return super().activation(z)
+        return 1 if z >=0 else 0
 
 
 
     
-def main():
+def train_all():
     print("demo of the perceptron")
     data = pd.read_csv("irisdata.csv")
     subset = data.iloc[:, 0:4].values.astype(float)
@@ -162,9 +177,9 @@ def main():
     versicolor_labels = (raw_species == "Iris-versicolor").astype(int)
     virginica_labels = (raw_species == "Iris-virginica").astype(int)
     ## we can then make the preceptrons
-    setosa = preceptron(shape=4,training_class=binary_classification,filepath="setosa.pkl")
-    versicolor = preceptron(shape=4,training_class=binary_classification,n_itterations= 50,lerning_rate=0.0001 , filepath="versicolor.pkl")
-    virginica = preceptron(shape=4,training_class=binary_classification,n_itterations= 50,lerning_rate=0.0001,filepath="virginica.pkl")
+    setosa = preceptron(shape=4,training_class=binary_classification,filepath="setosa.json")
+    versicolor = preceptron(shape=4,training_class=binary_classification,n_itterations= 50,lerning_rate=0.0001 , filepath="versicolor.json")
+    virginica = preceptron(shape=4,training_class=binary_classification,n_itterations= 50,lerning_rate=0.0001,filepath="virginica.json")
     print("starting training of the preceptrons this may take a while")
     ## we should be able to train this now
     print("traning setosa...")
@@ -185,18 +200,90 @@ def main():
     setosa_labels = (raw_species == "Iris-setosa").astype(int)
     versicolor_labels = (raw_species == "Iris-versicolor").astype(int)
     virginica_labels = (raw_species == "Iris-virginica").astype(int)
-    setosa = preceptron(shape=4,training_class=Adaline_classification,filepath="setosa_Adaline.pkl")
+    setosa = preceptron(shape=4,training_class=Adaline_classification,filepath="setosa_Adaline.json",n_itterations= 2500000,lerning_rate=0.0000001)
     setosa.training_class.fit(subset.copy(),setosa_labels)
     setosa.save()
-    versicolor = preceptron(shape=4,training_class=Adaline_classification, filepath="versicolor_Adaline.pkl")
+    versicolor = preceptron(shape=4,training_class=Adaline_classification, filepath="versicolor_Adaline.json",n_itterations= 2500000,lerning_rate=0.0000001)
     versicolor.training_class.fit(subset.copy(),versicolor_labels)
     versicolor.save()
-    virginica = preceptron(shape=4,training_class=Adaline_classification,filepath="virginica_Adaline.pkl")
+    virginica = preceptron(shape=4,training_class=Adaline_classification,filepath="virginica_Adaline.json",lerning_rate=0.0000001,n_itterations= 2500000)
     virginica.training_class.fit(subset.copy(),virginica_labels)
     virginica.save()
     
 
 
+modles = {
+    "setosa": preceptron(shape=4,training_class=binary_classification,filepath="setosa.json"),
+    "setosa_Adaline": preceptron(shape=4,training_class=Adaline_classification,filepath="setosa_Adaline.json"),
+    "setosa_SGD": preceptron(shape=4,training_class=SGDbinary_classification,filepath="setosa_SGD.json"),
+    "versicolor": preceptron(shape=4,training_class=binary_classification, filepath="versicolor.json"),
+    "versicolor_Adaline": preceptron(shape=4,training_class=Adaline_classification, filepath="versicolor_Adaline.json"),
+    "versicolor_SGD":  preceptron(shape=4,training_class=SGDbinary_classification, filepath="versicolor_SGD.json"),
+    "virginica" : preceptron(shape=4,training_class=binary_classification,filepath="virginica.json"),
+    "virginica_Adaline" : preceptron(shape=4,training_class=Adaline_classification,filepath="virginica_Adaline.json"),
+    "virginica_SGD" : preceptron(shape=4,training_class=SGDbinary_classification,filepath="virginica_SGD.json")
+}
+
+def predict(vec, modl =None):
+    if modl == None:
+        setosa = [modles["setosa"],modles["setosa_Adaline"],modles["setosa_SGD"]]
+        versicolor = [modles["versicolor"],modles["versicolor_Adaline"],modles["versicolor_SGD"]]
+        virginica = [modles["virginica"],modles["virginica_Adaline"],modles["versicolor_SGD"]]
+        print("starting prediction with all the difrent preceptrons")
+        voter_func = lambda preceptrons: sum(map(lambda x: x.training_class.predict(vec),preceptrons))
+        vote_setosa = voter_func(setosa)
+        vote_versicolor = voter_func(versicolor)
+        vote_virginica = voter_func(virginica)
+        print(f"votes \nsetosa:{vote_setosa} \nversicolor{vote_versicolor} \nvirginica{vote_virginica}")
+    else:
+        print(f"the prediction from {modl} is {modles[modl].training_class.predict(vec)}")
+
+def main():
+    help = ''''
+Welcome to the demo
+expected usage
+[python command] [filename] [args]
+Arguments start with a dash and can take values as arguments
+-p [size vector]: takes int as the size of the vector and a vector of values to predict
+-t              : runs the training part of the program
+-m [string]     : runs a particular modle 
+    options
+    <
+    setosa
+    ,setosa_Adaline
+    ,setosa_SGD
+    ,versicolor
+    ,versicolor_Adaline
+    ,versicolor_SGD
+    ,virginica
+    ,virginica_Adaline
+    ,virginica_SGD
+    >
+    '''
+
+    modl = None
+
+    if len(sys.argv) > 1:
+        i = 1
+        while i < len(sys.argv):
+            arg = sys.argv[i]
+            if arg == "-t":
+                train_all()
+            elif arg == "-p":
+                n = int(sys.argv[i+1])
+                vec = np.array(sys.argv[i+2:i+2+n],dtype=float)
+                print(f"reading in {n} vals as a vector ->>{vec}")
+                i+=n
+            elif arg == "-m":
+                modl = str(sys.argv[i+1])
+                i += 1
+                pass
+            i += 1
+            
+        predict(vec,modl)
+    else:
+        print(help)
+    pass
 
 if __name__ == "__main__":
     main()

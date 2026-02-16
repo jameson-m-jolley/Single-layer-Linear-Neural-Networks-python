@@ -1,242 +1,135 @@
 from cProfile import label
 import sys
-import time
 import numpy as np
 import pandas as pd
-import unittest
-import pickle
-import json
-from abc import ABC, abstractmethod
+from perceptron import perceptron ,binary_classification
+from Adaline import Adaline_classification
+from SGD import SGDbinary_classification
 
 
-#this is the decision function 
-
-class abstract_training_class(ABC):
-
-    def __init__(self,preceptron,shape = 0):
-        self.preceptron = preceptron
-        self.preceptron.vector = np.random.normal(loc=0 ,scale=1, size = shape)
-
-    def net_output(self,x):
-        weights = np.array(self.preceptron.vector, dtype=np.float64)
-        bias = float(self.preceptron.bias)
-        if type(x) == str:
-            print(f"type of x is a string that string is[{x}]")
-        input_x = np.array(x, dtype=np.float64)
-        return np.dot(input_x, weights) + bias
-    
-    def predict(self,input_vec = []):
-        return self.activation(self.net_output(input_vec))
-   
-    @abstractmethod
-    def fit(self):
-        raise Exception("you need to impliment the fit function") 
-        pass
-  
-    @abstractmethod
-    def activation(self,z):
-        raise Exception("you need to impliment the activation function") 
-        pass
-
-#this is the more absstract preceptron and we can use this one to make other ones
-#this is a genral one that has the correct structure that we can then use an adapter
-#paddern to use a abstract class to make the correct traning algo
-class preceptron(object):
-    def __init__(self,shape,filepath, lerning_rate = 0.1, n_itterations = 50, seed = 0,training_class = None,  ):
-        self.lerning_rate = lerning_rate
-        self.n_itterations = n_itterations
-        self.seed = seed
-        self.errors = []
-        self.vector = [] # this is just empty for now
-        self.bias = 0
-        self.training_class = training_class(shape = shape,preceptron = self)
-        self.filepath = filepath 
-        if(self.filepath):
-            try:
-                self = self.load()
-            except:
-                print(f"no file with path:{filepath}")
-
-    def to_JSON(self):
-        clone = self.__dict__.copy()
-        clone['training_class'] = None
-        clone['vector'] = self.vector.tolist()
-        return json.dumps(clone)
-
-    def __str__(self):
-        return f"""
-__________preceptron________________      
-filepath        :{self.filepath}
-lerning_rate    :{self.lerning_rate}
-seed            :{self.seed}
-vector          :{self.vector}
-bias            :{self.bias}
-training_class  :{self.training_class}
-____________________________________ 
-                """
-
-    def save(self):
-        with open(self.filepath,'wb') as f:
-            bites = self.to_JSON().encode('utf-8')
-            f.write(bites)
-    
-    def load(self):
-        '''loads only the vector and the bias we dont need anything else from the file'''
-        with open(self.filepath,'rb') as f:
-            json_data = json.load(f)
-            self.vector = np.array(json_data["vector"],dtype=float)
-            self.bias = float(json_data["bias"])
-
-  
-
-class binary_classification(abstract_training_class):
-
-    def __init__(self,preceptron,shape = 0):
-        super().__init__(preceptron,shape)
-
-    def fit(self,data_points,labes):
-        # the book and the slides have us make the vector but that sould be done at the time of the obj creation
-        # i dont like loops so i will use maps if i can
-        def update(features,prediction):
-                update = self.preceptron.lerning_rate*(int(prediction) - self.predict(features))
-                self.preceptron.vector += update * features # this is an array op i didn't know this was a thing
-                self.preceptron.bias += update
-                return int(update != 0) # we return the errors
-        for i in range(self.preceptron.n_itterations):
-            errors = sum(map(update,data_points,labes))
-            self.preceptron.errors.append(errors)
-        return self
-
-    def activation(self,z):
-        return 1 if z >=0 else 0
-
-    
-class Adaline_classification(abstract_training_class):
-
-    def __init__(self,preceptron,shape = 0):
-        super().__init__(preceptron,shape)
-        self.costs = [] # this is what we are to minimize 
-        
-    def fit(self,data_points,labes):
-        data_points = np.asarray(data_points).astype(float)
-        labes = np.asarray(labes).astype(float)
-        # the book and the slides have us make the vector but that sould be done at the time of the obj creation
-        for i in range(self.preceptron.n_itterations):
-            try:
-                errors =(labes -  self.net_output(data_points)) # the disetances of the output from the actctual
-                cost = sum(errors**2) / 2.0
-                if cost == float('nan') or cost == float('inf') :
-                    self.preceptron.lerning_rate = sys.float_info.min
-                    raise ValueError("cost should not be nan or infinity lowering the learning rate to the min")
-                self.preceptron.vector += self.preceptron.lerning_rate*data_points.T.dot(errors) # this is an array op i didn't know this was a thing
-                self.preceptron.bias += self.preceptron.lerning_rate* sum(errors)
-                
-                self.costs.append(cost)
-                if i % 10 == 0:
-                    print(f"Iteration {i}: Cost {cost}")
-            except Exception as e:
-                print(f"somthing was wrong with one of the itterations {e}")
-        return self
-    
-    def activation(self, z):
-        return 1 if z >=0 else 0
-
-
-class SGDbinary_classification(abstract_training_class):
-
-    def __init__(self,preceptron,shape = 0):
-        super().__init__(preceptron,shape)
-        
-    def fit(self,data_points,labes):
-        # the book and the slides have us make the vector but that sould be done at the time of the obj creation
-        # i dont like loops so i will use maps if i can
-        def update(features,prediction):
-                update = self.preceptron.lerning_rate*(int(prediction) - self.predict(features))
-                self.preceptron.vector += update * features # this is an array op i didn't know this was a thing
-                self.preceptron.bias += update
-                return int(update != 0) # we return the errors
-        for i in range(self.preceptron.n_itterations):
-            errors = sum(map(update,data_points,labes))
-            self.preceptron.errors.append(errors)            
-        return self
-    
-    def activation(self, z):
-        return 1 if z >=0 else 0
-
-
-
-    
 def train_all():
-    print("demo of the perceptron")
+    print("--- Starting Training Demo ---")
     data = pd.read_csv("irisdata.csv")
     subset = data.iloc[:, 0:4].values.astype(float)
-    ## we need to ajust the labes for the classifiers 
-    # Extract the raw species column once
     raw_species = data.iloc[:, 4].values 
-    setosa_labels = (raw_species == "Iris-setosa").astype(int)
-    versicolor_labels = (raw_species == "Iris-versicolor").astype(int)
-    virginica_labels = (raw_species == "Iris-virginica").astype(int)
-    ## we can then make the preceptrons
-    setosa = preceptron(shape=4,training_class=binary_classification,filepath="setosa.json")
-    versicolor = preceptron(shape=4,training_class=binary_classification,n_itterations= 50,lerning_rate=0.0001 , filepath="versicolor.json")
-    virginica = preceptron(shape=4,training_class=binary_classification,n_itterations= 50,lerning_rate=0.0001,filepath="virginica.json")
-    print("starting training of the preceptrons this may take a while")
-    ## we should be able to train this now
-    print("traning setosa...")
-    setosa.training_class.fit(subset,setosa_labels)
-    print(f"done error rate = {setosa.errors[-1]/len(setosa_labels)*100}%")
-    setosa.save()
-    print("traning versicolor...")
-    versicolor.training_class.fit(subset,versicolor_labels)
-    versicolor.save()
-    print(f"done error rate = {versicolor.errors[-1]/len(setosa_labels)*100}%")
-    print("traning virginica...")
-    virginica.training_class.fit(subset,virginica_labels)
-    virginica.save()
-    print(f"done error rate = {virginica.errors[-1]/len(setosa_labels)*100}%")
 
-    print("______done with the binary_classification demo______")
-    print("training with Adaline")
-    setosa_labels = (raw_species == "Iris-setosa").astype(int)
-    versicolor_labels = (raw_species == "Iris-versicolor").astype(int)
-    virginica_labels = (raw_species == "Iris-virginica").astype(int)
-    setosa = preceptron(shape=4,training_class=Adaline_classification,filepath="setosa_Adaline.json",n_itterations= 2500000,lerning_rate=0.0000001)
-    setosa.training_class.fit(subset.copy(),setosa_labels)
-    setosa.save()
-    versicolor = preceptron(shape=4,training_class=Adaline_classification, filepath="versicolor_Adaline.json",n_itterations= 2500000,lerning_rate=0.0000001)
-    versicolor.training_class.fit(subset.copy(),versicolor_labels)
-    versicolor.save()
-    virginica = preceptron(shape=4,training_class=Adaline_classification,filepath="virginica_Adaline.json",lerning_rate=0.0000001,n_itterations= 2500000)
-    virginica.training_class.fit(subset.copy(),virginica_labels)
-    virginica.save()
+    target_species = ["setosa", "versicolor", "virginica"]
+    model_types = ["", "_Adaline", "_SGD"] # Suffixes matching your dict keys
+
+    for model_type in model_types:
+        print(f"\n--- Training Algorithm: {model_type.strip('_') if model_type else 'Perceptron'} ---")
+        
+        for species in target_species:
+            dict_key = f"{species}{model_type}"
+            target_name = f"Iris-{species}"
+            labels = (raw_species == target_name).astype(int)    
+            print(f"Training {dict_key} for {target_name}...")
+            model = modles[dict_key]
+            model.training_class.fit(subset.copy(), labels)
+            model.save()
+            if hasattr(model, 'errors') and len(model.errors) > 0:
+                print(f"Done. Final error count: {model.errors[-1]}")
+            elif hasattr(model.training_class, 'costs') and len(model.training_class.costs) > 0:
+                print(f"Done. Final cost: {model.training_class.costs[-1]:.6f}")
+
+    target_name = ["Dropout","Graduate"]
+    data = pd.read_csv("data2.csv", sep=';')
+    subset = standardize(data.iloc[:, 0:35].values.astype(float))
+    raw_target_class = data.iloc[:, 36].values 
+    model_types = ["", "_Adaline", "_SGD"] 
     
+    for type in model_types:
+        print(f"\n--- Training Algorithm: {type.strip('_') if type else 'Perceptron'} ---")
+        for name in target_name:
+            dict_key = f"{name}{type}"
+            target_class = (raw_target_class.copy() == name).astype(int)
+            print(f"Training {dict_key} for {name}...")
+            model = modles[dict_key]
+            model.training_class.fit(subset.copy(), target_class)
+            model.save()
+            if hasattr(model, 'errors') and len(model.errors) > 0:
+                print(f"Done. Final error count: {model.errors[-1]}")
+            elif hasattr(model.training_class, 'costs') and len(model.training_class.costs) > 0:
+                print(f"Done. Final cost: {model.training_class.costs[-1]:.6f}")
+
+
+    print("\n--- All models trained and saved successfully ---")
 
 
 modles = {
-    "setosa": preceptron(shape=4,training_class=binary_classification,filepath="setosa.json"),
-    "setosa_Adaline": preceptron(shape=4,training_class=Adaline_classification,filepath="setosa_Adaline.json"),
-    "setosa_SGD": preceptron(shape=4,training_class=SGDbinary_classification,filepath="setosa_SGD.json"),
-    "versicolor": preceptron(shape=4,training_class=binary_classification, filepath="versicolor.json"),
-    "versicolor_Adaline": preceptron(shape=4,training_class=Adaline_classification, filepath="versicolor_Adaline.json"),
-    "versicolor_SGD":  preceptron(shape=4,training_class=SGDbinary_classification, filepath="versicolor_SGD.json"),
-    "virginica" : preceptron(shape=4,training_class=binary_classification,filepath="virginica.json"),
-    "virginica_Adaline" : preceptron(shape=4,training_class=Adaline_classification,filepath="virginica_Adaline.json"),
-    "virginica_SGD" : preceptron(shape=4,training_class=SGDbinary_classification,filepath="virginica_SGD.json")
+    "setosa": perceptron(shape=4,training_class=binary_classification,filepath="setosa.json",learning_rate=0.00001),
+    "setosa_Adaline": perceptron(shape=4,training_class=Adaline_classification,filepath="setosa_Adaline.json",learning_rate=0.00001),
+    "setosa_SGD": perceptron(shape=4,training_class=SGDbinary_classification,filepath="setosa_SGD.json",learning_rate=0.00001),
+    "versicolor": perceptron(shape=4,training_class=binary_classification, filepath="versicolor.json",learning_rate=0.00001),
+    "versicolor_Adaline": perceptron(shape=4,training_class=Adaline_classification, filepath="versicolor_Adaline.json",learning_rate=0.00001),
+    "versicolor_SGD":  perceptron(shape=4,training_class=SGDbinary_classification, filepath="versicolor_SGD.json",learning_rate=0.00001),
+    "virginica" : perceptron(shape=4,training_class=binary_classification,filepath="virginica.json",learning_rate=0.00001),
+    "virginica_Adaline" : perceptron(shape=4,training_class=Adaline_classification,filepath="virginica_Adaline.json",learning_rate=0.00001),
+    "virginica_SGD" : perceptron(shape=4,training_class=SGDbinary_classification,filepath="virginica_SGD.json",learning_rate=0.00001 ),
+    "Dropout": perceptron(shape=35,training_class=binary_classification,filepath="Dropout.json",learning_rate=0.00001, n_iterations=100),
+    "Dropout_Adaline": perceptron(shape=35,training_class=Adaline_classification,filepath="Dropout_Adaline.json",learning_rate=0.00001, n_iterations=10000),
+    "Dropout_SGD" :perceptron(shape=35,training_class=SGDbinary_classification,filepath="Dropout_SGD.json",learning_rate=0.00001, n_iterations=100),
+    "Graduate": perceptron(shape=35,training_class=binary_classification,filepath="Graduate.json",learning_rate=0.00001, n_iterations=100),
+    "Graduate_Adaline" :perceptron(shape=35,training_class=Adaline_classification,filepath="Graduate_Adaline.json",learning_rate=0.00001, n_iterations=10000),
+    "Graduate_SGD": perceptron(shape=35,training_class=SGDbinary_classification,filepath="Graduate_SGD.json",learning_rate=0.00001, n_iterations=100)
 }
+
+def standardize(X):
+    # Standardize each column: (x - mean) / std
+    return (X - np.mean(X, axis=0)) / np.std(X, axis=0)
 
 def predict(vec, modl =None):
     if modl == None:
         setosa = [modles["setosa"],modles["setosa_Adaline"],modles["setosa_SGD"]]
         versicolor = [modles["versicolor"],modles["versicolor_Adaline"],modles["versicolor_SGD"]]
         virginica = [modles["virginica"],modles["virginica_Adaline"],modles["versicolor_SGD"]]
-        print("starting prediction with all the difrent preceptrons")
-        voter_func = lambda preceptrons: sum(map(lambda x: x.training_class.predict(vec),preceptrons))
+        print("starting prediction with all the difrent perceptrons")
+        voter_func = lambda perceptrons: sum(map(lambda x: x.training_class.predict(vec),perceptrons))
         vote_setosa = voter_func(setosa)
         vote_versicolor = voter_func(versicolor)
         vote_virginica = voter_func(virginica)
         print(f"votes \nsetosa:{vote_setosa} \nversicolor{vote_versicolor} \nvirginica{vote_virginica}")
     else:
+        if modl in ["Dropout","Dropout_Adaline","Dropout_SGD","Graduate","Graduate_Adaline","Graduate_SGD"]:
+            vec = standardize(vec)    
+            print("vector was standardized")
         print(f"the prediction from {modl} is {modles[modl].training_class.predict(vec)}")
+
+def test_ds(modl_key):
+    if modl_key not in modles:
+        print(f"Model {modl_key} not found!")
+        return
+
+    # 1. Load the correct dataset and prepare features/labels
+    if any(x in modl_key for x in ["Dropout", "Graduate"]):
+        data = pd.read_csv("data2.csv", sep=';')
+        subset = standardize(data.iloc[:, 0:35].values.astype(float))
+        # The target names we are looking for are in the key (e.g., "Dropout")
+        target_name = "Dropout" if "Dropout" in modl_key else "Graduate"
+        raw_labels = data.iloc[:, 36].values 
+    else:
+        data = pd.read_csv("irisdata.csv")
+        subset = data.iloc[:, 0:4].values.astype(float)
+        # Match keys like 'setosa' to 'Iris-setosa'
+        target_name = f"Iris-{modl_key.split('_')[0]}" 
+        raw_labels = data.iloc[:, 4].values 
+
+    y_true = (raw_labels == target_name).astype(int)
+    model = modles[modl_key]
+    y_pred = np.array([model.training_class.predict(row) for row in subset])
+    accuracy = np.mean(y_true == y_pred) * 100
+    pred_1s = np.sum(y_pred == 1)
+    total = len(y_pred)
+    print(f"\n--- Test Results for {modl_key} ---")
+    print(f"Targeting: {target_name}")
+    print(f"Accuracy: {accuracy:.2f}%")
+    print(f"Predicted 'Positive' for {pred_1s} out of {total} samples ({(pred_1s/total)*100:.1f}%)")
+    tp = np.sum((y_true == 1) & (y_pred == 1))
+    fp = np.sum((y_true == 0) & (y_pred == 1))
+    fn = np.sum((y_true == 1) & (y_pred == 0))
+    tn = np.sum((y_true == 0) & (y_pred == 0))
+    print(f"True Positives: {tp} | False Positives: {fp}")
+    print(f"True Negatives: {tn} | False Negatives: {fn}")
 
 def main():
     help = ''''
@@ -244,6 +137,7 @@ Welcome to the demo
 expected usage
 [python command] [filename] [args]
 Arguments start with a dash and can take values as arguments
+-test           : dose a test
 -p [size vector]: takes int as the size of the vector and a vector of values to predict
 -t              : runs the training part of the program
 -m [string]     : runs a particular modle 
@@ -258,10 +152,18 @@ Arguments start with a dash and can take values as arguments
     ,virginica
     ,virginica_Adaline
     ,virginica_SGD
+    ,Dropout
+    ,Dropout_Adaline
+    ,Dropout_SGD
+    ,Graduate
+    ,Graduate_Adaline
+    ,Graduate_SGD
     >
     '''
 
     modl = None
+    ds = False
+    vec = None
 
     if len(sys.argv) > 1:
         i = 1
@@ -272,15 +174,26 @@ Arguments start with a dash and can take values as arguments
             elif arg == "-p":
                 n = int(sys.argv[i+1])
                 vec = np.array(sys.argv[i+2:i+2+n],dtype=float)
-                print(f"reading in {n} vals as a vector ->>{vec}")
                 i+=n
             elif arg == "-m":
                 modl = str(sys.argv[i+1])
                 i += 1
                 pass
+            elif arg == "-test":
+                ds = True
+                pass
             i += 1
+
+        if ds:
+            test_ds(modl)
             
-        predict(vec,modl)
+
+        if modl != None:
+            try:
+                predict(vec,modl)
+            except Exception as e:
+                print(e)
+                pass
     else:
         print(help)
     pass

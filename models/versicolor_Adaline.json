@@ -1,0 +1,1 @@
+{"learning_rate": 1e-05, "n_iterations": 50, "seed": 0, "errors": [], "vector": [0.5427216017890959, -0.6758795709884421, 0.1490130358289913, -0.9342091166093102], "bias": -0.21947215342646523, "training_class": null, "filepath": "versicolor_Adaline.json"}

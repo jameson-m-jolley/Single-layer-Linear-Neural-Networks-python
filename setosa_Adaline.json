@@ -1,1 +1,0 @@
-{"lerning_rate": 1e-07, "n_itterations": 2500000, "seed": 0, "errors": [], "vector": [0.06189367111945431, 0.26143942884882193, -0.20390564081338186, -0.09827841530325483], "bias": 0.05685458803266919, "training_class": null, "filepath": "setosa_Adaline.json"}

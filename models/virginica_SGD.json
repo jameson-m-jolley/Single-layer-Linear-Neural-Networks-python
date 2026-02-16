@@ -1,0 +1,1 @@
+{"learning_rate": 1e-05, "n_iterations": 50, "seed": 0, "errors": [], "vector": [-0.32548484893445107, 0.25889926456576967, 0.1707854015597103, 0.481515026479964], "bias": 0.22283572287115422, "training_class": null, "filepath": "virginica_SGD.json"}

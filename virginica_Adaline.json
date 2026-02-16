@@ -1,1 +1,0 @@
-{"lerning_rate": 1e-07, "n_itterations": 2500000, "seed": 0, "errors": [], "vector": [-0.06840566067441586, 0.15948840197829636, -0.012988999653046512, 0.5974951252614776], "bias": -0.4202006799847317, "training_class": null, "filepath": "virginica_Adaline.json"}

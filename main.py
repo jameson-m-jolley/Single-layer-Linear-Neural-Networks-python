@@ -56,6 +56,8 @@ def train_all():
     print("\n--- All models trained and saved successfully ---")
 
 
+
+    
 modles = {
     "setosa": perceptron(shape=4,training_class=binary_classification,filepath="setosa.json",learning_rate=0.00001),
     "setosa_Adaline": perceptron(shape=4,training_class=Adaline_classification,filepath="setosa_Adaline.json",learning_rate=0.00001),
@@ -66,12 +68,12 @@ modles = {
     "virginica" : perceptron(shape=4,training_class=binary_classification,filepath="virginica.json",learning_rate=0.00001),
     "virginica_Adaline" : perceptron(shape=4,training_class=Adaline_classification,filepath="virginica_Adaline.json",learning_rate=0.00001),
     "virginica_SGD" : perceptron(shape=4,training_class=SGDbinary_classification,filepath="virginica_SGD.json",learning_rate=0.00001 ),
-    "Dropout": perceptron(shape=35,training_class=binary_classification,filepath="Dropout.json",learning_rate=0.00001, n_iterations=100),
-    "Dropout_Adaline": perceptron(shape=35,training_class=Adaline_classification,filepath="Dropout_Adaline.json",learning_rate=0.00001, n_iterations=10000),
-    "Dropout_SGD" :perceptron(shape=35,training_class=SGDbinary_classification,filepath="Dropout_SGD.json",learning_rate=0.00001, n_iterations=100),
-    "Graduate": perceptron(shape=35,training_class=binary_classification,filepath="Graduate.json",learning_rate=0.00001, n_iterations=100),
-    "Graduate_Adaline" :perceptron(shape=35,training_class=Adaline_classification,filepath="Graduate_Adaline.json",learning_rate=0.00001, n_iterations=10000),
-    "Graduate_SGD": perceptron(shape=35,training_class=SGDbinary_classification,filepath="Graduate_SGD.json",learning_rate=0.00001, n_iterations=100)
+    "Dropout": perceptron(shape=35,training_class=binary_classification,filepath="Dropout.json",learning_rate=0.00001),
+    "Dropout_Adaline": perceptron(shape=35,training_class=Adaline_classification,filepath="Dropout_Adaline.json",learning_rate=0.00001),
+    "Dropout_SGD" :perceptron(shape=35,training_class=SGDbinary_classification,filepath="Dropout_SGD.json",learning_rate=0.00001),
+    "Graduate": perceptron(shape=35,training_class=binary_classification,filepath="Graduate.json",learning_rate=0.00001),
+    "Graduate_Adaline" :perceptron(shape=35,training_class=Adaline_classification,filepath="Graduate_Adaline.json",learning_rate=0.00001),
+    "Graduate_SGD": perceptron(shape=35,training_class=SGDbinary_classification,filepath="Graduate_SGD.json",learning_rate=0.00001)
 }
 
 def standardize(X):

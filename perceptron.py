@@ -53,7 +53,7 @@ class abstract_training_class(ABC):
 #this is a genral one that has the correct structure that we can then use an adapter
 #paddern to use a abstract class to make the correct traning algo
 class perceptron(object):
-    def __init__(self,shape,filepath, learning_rate = 0.1, n_iterations = 50, seed = 0,training_class = None,  ):
+    def __init__(self,shape,filepath, learning_rate = 0.1, n_iterations =settings.iterations_for_training , seed = 0,training_class = None,  ):
         self.learning_rate = learning_rate
         self.n_iterations = n_iterations
         self.seed = seed

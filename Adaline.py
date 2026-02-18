@@ -35,4 +35,4 @@ class Adaline_classification(abstract_training_class):
     
     
     def activation(self, z):
-        return 1 if z >=0 else 0
+        return 1 if z >=0.5 else 0

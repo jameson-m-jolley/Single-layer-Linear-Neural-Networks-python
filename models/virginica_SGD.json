@@ -1,1 +1,1 @@
-{"learning_rate": 1e-05, "n_iterations": 50, "seed": 0, "errors": [], "vector": [-0.6110938365969333, 0.21807126220050327, 0.5520279206524074, 1.0148493227521567], "bias": -0.1317121485687729, "training_class": null, "filepath": "virginica_SGD.json"}
+{"learning_rate": 1e-05, "n_iterations": 1000, "seed": 0, "errors": [], "vector": [0.6241498190688117, -0.8816319988649716, -0.44781301156105147, 0.7653537881559831], "bias": 0.13960302148712156, "training_class": null, "filepath": "virginica_SGD.json"}

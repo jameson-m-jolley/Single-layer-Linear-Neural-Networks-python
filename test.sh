@@ -1,4 +1,3 @@
-#!/bin/bash
 
 # 1. Run the training for all models
 echo "--- Starting Global Training ---"

@@ -1,1 +1,1 @@
-{"learning_rate": 1e-05, "n_iterations": 50, "seed": 0, "errors": [], "vector": [0.5302762712427017, -0.14070162604201678, -1.3583702926279708, 2.129118176671475], "bias": 0.21161432242921555, "training_class": null, "filepath": "setosa_SGD.json"}
+{"learning_rate": 1e-05, "n_iterations": 50, "seed": 0, "errors": [], "vector": [-0.3284077808136549, 0.9466404136678919, 0.3845219114887444, -1.6877411963260864], "bias": 0.02358240830588203, "training_class": null, "filepath": "setosa_SGD.json"}

@@ -1,1 +1,1 @@
-{"learning_rate": 1e-05, "n_iterations": 50, "seed": 0, "errors": [], "vector": [-0.02002025496364825, -0.037008320577838615, 0.7909996971907872, -1.7592675055350862], "bias": -0.30575094057753094, "training_class": null, "filepath": "versicolor_SGD.json"}
+{"learning_rate": 1e-05, "n_iterations": 50, "seed": 0, "errors": [], "vector": [-1.1050237885578356, -0.7952811573449625, 2.2950386819430033, -0.281020961104271], "bias": 0.225536757872095, "training_class": null, "filepath": "versicolor_SGD.json"}
